@@ -104,11 +104,32 @@ module Savon
       )
 
       request.url = endpoint
-      request.body = builder.to_s
 
-      # TODO: could HTTPI do this automatically in case the header
-      #       was not specified manually? [dh, 2013-01-04]
-      request.headers["Content-Length"] = request.body.bytesize.to_s
+      if @locals.get_attachments.any?
+        request_message = Mail::Part.new do
+          content_type 'multipart/related; type="text/xml"'
+        end
+        soap_body = builder.to_s
+
+        replacement = %(<ins0:inhalt xm:contentType="pdf"><xop:Include href="cid:test.pdf" /></ins0:inhalt>)
+        soap_body = soap_body.gsub('<ins0:inhalt>XO_REF</ins0:inhalt>', replacement)
+
+        soap_part = Mail::Part.new do
+          content_type 'text/xml; charset=utf-8'
+          add_content_transfer_encoding
+          body soap_body
+        end
+        request_message.add_part(soap_part)
+        @locals.get_attachments.each { |part| request_message.add_part(part) }
+        # request.headers.delete 'SOAPAction'
+        request.body = request_message.body.encoded
+      else
+        request.body = builder.to_s
+
+        # TODO: could HTTPI do this automatically in case the header
+        #       was not specified manually? [dh, 2013-01-04]
+        request.headers["Content-Length"] = request.body.bytesize.to_s
+      end
 
       request
     end

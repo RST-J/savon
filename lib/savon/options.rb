@@ -348,7 +348,8 @@ module Savon
       defaults = {
         :advanced_typecasting => true,
         :response_parser      => :nokogiri,
-        :multipart            => false
+        :multipart            => false,
+        :attachments          => []
       }
 
       super defaults.merge(options)
@@ -406,5 +407,13 @@ module Savon
     def multipart(multipart)
       @options[:multipart] = multipart
     end
+
+     def attachments(attachments)
+       @options[:attachments] = attachments
+     end
+
+     def get_attachments
+       @options[:attachments]
+     end
   end
 end
